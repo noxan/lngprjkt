@@ -10,6 +10,22 @@ class Base(object):
         return json.dumps(self.__self__)
 
 
+class Manager(object):
+    collection = {}
+    model = None
+
+    @classmethod
+    def get(self, value):
+        key = value.lower()
+        if key not in self.collection:
+            self.collection[key] = Word(value)
+        return self.collection[key]
+
+    @classmethod
+    def set(self, key, value):
+        self.collection[key] = value
+
+
 class File(Base):
     def __init__(self, filename):
         self.filename = filename
@@ -49,7 +65,7 @@ class File(Base):
 class Sentence(Base):
     def __init__(self, content, end):
         content = content.replace(',', ' ')
-        self.words = [Word(w) for w in content.split(' ') if w]
+        self.words = [WordManager.get(w) for w in content.split(' ') if w]
         self.end = end
 
     @property
@@ -77,6 +93,10 @@ class Word(Base):
 
     def __repr__(self):
         return self.word
+
+
+class WordManager(Manager):
+    model = Word
 
 
 f = File('sample0.txt')
