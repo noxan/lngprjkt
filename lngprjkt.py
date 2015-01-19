@@ -30,7 +30,7 @@ class File(Base):
     def __init__(self, filename):
         self.filename = filename
 
-    def read(self):
+    def parse(self):
         f = open(self.filename, 'r')
         content = f.read()
 
@@ -43,6 +43,22 @@ class File(Base):
         separator = '.'
 
         self.sentences = [Sentence(s.strip(), separator) for s in content.split(separator) if s]
+
+    def read(self):
+        f = open(self.filename, 'r')
+        content = f.read()
+
+        self.sentences = []
+
+        data = json.loads(content)
+
+        for sentence in data['sentences']:
+            for word in sentence['word']:
+                words = [WordManager.get(word) for word, meta in word]
+            end = sentence['end']
+            self.sentences.append(Sentence(words, end))
+
+        return data
 
     def save(self):
         f = open(self.filename, 'w')
@@ -64,8 +80,11 @@ class File(Base):
 
 class Sentence(Base):
     def __init__(self, content, end):
-        content = content.replace(',', ' ')
-        self.words = [WordManager.get(w) for w in content.split(' ') if w]
+        if isinstance(content, list):
+            self.words = content
+        else:
+            content = content.replace(',', ' ')
+            self.words = [WordManager.get(w) for w in content.split(' ') if w]
         self.end = end
 
     @property
@@ -80,6 +99,8 @@ class Sentence(Base):
 
 
 class Word(Base):
+    NOUN, ADJECTIVE, VERB = range(3)
+
     def __init__(self, word):
         self.word = word.strip()
         self.meta = {}
@@ -99,7 +120,7 @@ class WordManager(Manager):
     model = Word
 
 
-f = File('sample0.txt')
+f = File('sample0.json')
 f.read()
 
 ss = f.sentences
